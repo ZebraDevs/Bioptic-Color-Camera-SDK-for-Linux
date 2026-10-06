@@ -68,19 +68,19 @@
 		<Unit filename="ZebraCameraDemoApp.cpp" />
 		<Unit filename="ZebraCameraDemoApp.h" />
 		<Unit filename="ZebraCameraDemoMain.cpp" />
-		<Unit filename="BiopticColorCameraDemoMain.h" />
+		<Unit filename="ZebraCameraDemoMain.h" />
 		<Unit filename="wx_pch.h">
 			<Option compile="1" />
 			<Option weight="0" />
 		</Unit>
-		<Unit filename="wxsmith/BiopticColorCameraDemoFrame.wxs" />
+		<Unit filename="wxsmith/ZebraCameraDemoframe.wxs" />
 		<Extensions>
 			<envvars />
 			<code_completion />
 			<wxsmith version="1">
-				<gui name="wxWidgets" src="ZebraCameraDemoApp.cpp" main="BiopticColorCameraDemoFrame" init_handlers="necessary" language="CPP" />
+				<gui name="wxWidgets" src="ZebraCameraDemoApp.cpp" main="ZebraCameraDemoFrame" init_handlers="necessary" language="CPP" />
 				<resources>
-					<wxFrame wxs="wxsmith/BiopticColorCameraDemoFrame.wxs" src="ZebraCameraDemoMain.cpp" hdr="BiopticColorCameraDemoMain.h" fwddecl="0" i18n="1" name="BiopticColorCameraDemoFrame" language="CPP" />
+					<wxFrame wxs="wxsmith/ZebraCameraDemoframe.wxs" src="ZebraCameraDemoMain.cpp" hdr="ZebraCameraDemoMain.h" fwddecl="0" i18n="1" name="ZebraCameraDemoFrame" language="CPP" />
 				</resources>
 			</wxsmith>
 			<debugger />

@@ -1,23 +1,12 @@
-/***************************************************************
- * Name:      DemoProcessingUnitControls.cpp
- * Purpose:   Implementation for displaying camera UVC properties.
- * Author:     ()
- * Created:   2021-03-05
- * Copyright: ©2022 Zebra Technologies Corp. and/or its affiliates.  All rights reserved
- * License:
- **************************************************************/
-
 #include <wx/valnum.h>  // For wxIntegerValidator.
 #include <wx/valgen.h>  // For wxGenericValidator.
 
-#include <iostream>
 #include "wx_pch.h"
-#include "BiopticColorCameraDemoMain.h"
+#include "ZebraCameraDemoMain.h"
 
 #define WHITE_BALANCE_NUMBER_OF_FRACTION_BITS			12
 #define WHITE_BALANCE_RANGE_MAX							0x4000
-#define WHITE_BALANCE_RANGE_MIN		                    0
-
+#define WHITE_BALANCE_RANGE_MIN							0
 
 /**
  * Convert uint16_t value into 4.12 floating point value.
@@ -42,83 +31,74 @@ static float ConvertUint16ToFloat(uint16_t actual_value, int number_of_fraction_
 static uint16_t ConvertFloatToUint16(float actual_value, int number_of_fraction_bits)
 {
 	return (uint16_t)(actual_value * (1 << number_of_fraction_bits));
-}					
-
-void BiopticColorCameraDemoFrame::PopulateProcessingUnitInfo(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
-{
-    wxLogMessage("%s", __func__);
-
-    if (camera) 
-    {
-        try
-        {
-            PopulateBrightness(camera);
-            PopulateContrast(camera);
-            PopulateSaturation(camera);
-            PopulateSharpness(camera);
-            PopulateGamma(camera);
-            PopulateWhiteBalanceComponent(camera);
-            PopulateBacklight(camera);
-            PopulateGain(camera);
-            PopulateAbsoluteExposureTime(camera);
-        }
-        catch (...) {}
-       
-    }
 }
 
-// Get brightness property value and set value to brightness slider
-void BiopticColorCameraDemoFrame::PopulateBrightness(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateBrightness(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxIntegerValidator<int>* ivalidator;
-    int16_t minimun = 0, maximum = 0, value = 0, resolution = 0;
+    int16_t min = 0, max = 0, val = 0, res = 0;
 
     SliderBrightness->Enable();
     TextCtrlBrightness->Enable();
 
-    minimun = camera->Brightness.Minimum();
-    maximum = camera->Brightness.Maximum();
-    value = camera->Brightness.Value();
-    resolution = camera->Brightness.Resolution();
+    min = camera->Brightness.Minimum();
+    max = camera->Brightness.Maximum();
+    val = camera->Brightness.Value();
+    res = camera->Brightness.Resolution();
 
     ivalidator = (wxIntegerValidator<int>*)TextCtrlBrightness->GetValidator();
-    ivalidator->SetMin(minimun);
-    ivalidator->SetMax(maximum);
+    ivalidator->SetMin(min);
+    ivalidator->SetMax(max);
 
-    property_brightness = value;
+    property_brightness = val;
 
-    SliderBrightness->SetMin(minimun);
-    SliderBrightness->SetMax(maximum);
-    SliderBrightness->SetTickFreq(resolution);
+    SliderBrightness->SetMin(min);
+    SliderBrightness->SetMax(max);
+    SliderBrightness->SetTickFreq(res);
 
     ivalidator->TransferToWindow();
     SliderBrightness->GetValidator()->TransferToWindow();
 }
 
-// Get contrast property value and set value to contrast slider
-void BiopticColorCameraDemoFrame::PopulateContrast(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateContrast(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxIntegerValidator<int>* ivalidator;
-    int16_t minimum = 0, maximum = 0, value = 0, resolution = 0;
+    int16_t min = 0, max = 0, val = 0, res = 0;
+
+    bool auto_supported = camera->Contrast.IsAutoSupported();
+    CheckBoxContrastAuto->Enable(auto_supported);
 
     SliderContrast->Enable();
     TextCtrlContrast->Enable();
 
+    if (auto_supported)
+    {
+        bool auto_enabled = camera->Contrast.IsAutoEnabled();
+        CheckBoxContrastAuto->SetValue(auto_enabled);
+
+        if (auto_enabled)
+        {
+            // Auto enabled. Disable the slider and text controls.
+            SliderContrast->Disable();
+            TextCtrlContrast->Disable();
+        }
+    }
+
     try {
-        minimum = camera->Contrast.Minimum();
-        maximum = camera->Contrast.Maximum();
-        value = camera->Contrast.Value();
-        resolution = camera->Contrast.Resolution();
+        min = camera->Contrast.Minimum();
+        max = camera->Contrast.Maximum();
+        val = camera->Contrast.Value();
+        res = camera->Contrast.Resolution();
 
         ivalidator = (wxIntegerValidator<int>*)TextCtrlContrast->GetValidator();
-        ivalidator->SetMin(minimum);
-        ivalidator->SetMax(maximum);
+        ivalidator->SetMin(min);
+        ivalidator->SetMax(max);
 
-        property_contrast = value;
+        property_contrast = val;
 
-        SliderContrast->SetMin(minimum);
-        SliderContrast->SetMax(maximum);
-        SliderContrast->SetTickFreq(resolution);
+        SliderContrast->SetMin(min);
+        SliderContrast->SetMax(max);
+        SliderContrast->SetTickFreq(res);
 
         ivalidator->TransferToWindow();
         SliderContrast->GetValidator()->TransferToWindow();
@@ -127,95 +107,91 @@ void BiopticColorCameraDemoFrame::PopulateContrast(std::shared_ptr<zebra::camera
     }
 }
 
-// Get saturation property value and set value to saturation slider
-void BiopticColorCameraDemoFrame::PopulateSaturation(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateSaturation(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxIntegerValidator<int>* ivalidator;
-    int16_t minimum = 0, maximum = 0, val = 0, res = 0;
+    int16_t min = 0, max = 0, val = 0, res = 0;
 
     SliderSaturation->Enable();
     TextCtrlSaturation->Enable();
 
-    minimum = camera->Saturation.Minimum();
-    maximum = camera->Saturation.Maximum();
+    min = camera->Saturation.Minimum();
+    max = camera->Saturation.Maximum();
     val = camera->Saturation.Value();
     res = camera->Saturation.Resolution();
 
     ivalidator = (wxIntegerValidator<int>*)TextCtrlSaturation->GetValidator();
-    ivalidator->SetMin(minimum);
-    ivalidator->SetMax(maximum);
+    ivalidator->SetMin(min);
+    ivalidator->SetMax(max);
 
     property_saturation = val;
 
-    SliderSaturation->SetMin(minimum);
-    SliderSaturation->SetMax(maximum);
+    SliderSaturation->SetMin(min);
+    SliderSaturation->SetMax(max);
     SliderSaturation->SetTickFreq(res);
 
     ivalidator->TransferToWindow();
     SliderSaturation->GetValidator()->TransferToWindow();
 }
 
-// Get sharpness property value and set value to sharpness slider
-void BiopticColorCameraDemoFrame::PopulateSharpness(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateSharpness(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxIntegerValidator<int>* ivalidator;
-    int16_t minimum = 0, maximum = 0, val = 0, res = 0;
+    int16_t min = 0, max = 0, val = 0, res = 0;
 
     SliderSharpness->Enable();
     TextCtrlSharpness->Enable();
 
-    minimum = camera->Sharpness.Minimum();
-    maximum = camera->Sharpness.Maximum();
+    min = camera->Sharpness.Minimum();
+    max = camera->Sharpness.Maximum();
     val = camera->Sharpness.Value();
     res = camera->Sharpness.Resolution();
 
     ivalidator = (wxIntegerValidator<int>*)TextCtrlSharpness->GetValidator();
-    ivalidator->SetMin(minimum);
-    ivalidator->SetMax(maximum);
+    ivalidator->SetMin(min);
+    ivalidator->SetMax(max);
 
     property_sharpness = val;
 
-    SliderSharpness->SetMin(minimum);
-    SliderSharpness->SetMax(maximum);
+    SliderSharpness->SetMin(min);
+    SliderSharpness->SetMax(max);
     SliderSharpness->SetTickFreq(res);
 
     ivalidator->TransferToWindow();
     SliderSharpness->GetValidator()->TransferToWindow();
 }
 
-// Get gamma property value and set value to gamma slider
-void BiopticColorCameraDemoFrame::PopulateGamma(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateGamma(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxIntegerValidator<int>* ivalidator;
-    int16_t minimum = 0, maximum= 0, val = 0, res = 0;
+    int16_t min = 0, max = 0, val = 0, res = 0;
 
     SliderGamma->Enable();
     TextCtrlGamma->Enable();
 
-    minimum = camera->Gamma.Minimum();
-    maximum = camera->Gamma.Maximum();
+    min = camera->Gamma.Minimum();
+    max = camera->Gamma.Maximum();
     val = camera->Gamma.Value();
     res = camera->Gamma.Resolution();
 
     ivalidator = (wxIntegerValidator<int>*)TextCtrlGamma->GetValidator();
-    ivalidator->SetMin(minimum);
-    ivalidator->SetMax(maximum);
+    ivalidator->SetMin(min);
+    ivalidator->SetMax(max);
 
     property_gamma = val;
 
-    SliderGamma->SetMin(minimum);
-    SliderGamma->SetMax(maximum);
+    SliderGamma->SetMin(min);
+    SliderGamma->SetMax(max);
     SliderGamma->SetTickFreq(res);
 
     ivalidator->TransferToWindow();
     SliderGamma->GetValidator()->TransferToWindow();
 }
 
-// Get white balance rad and blue property values and set values to respective white balance sliders
-void BiopticColorCameraDemoFrame::PopulateWhiteBalanceComponent(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateWhiteBalanceComponent(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxFloatingPointValidator<float>* fvalidator;
-    WhiteBalance minimum, maximum, val, res;
+    WhiteBalance min, max, val, res;
 
     bool auto_supported = camera->WhiteBalanceComponent.IsAutoSupported();
     CheckBoxWhiteBalanceAuto->Enable(auto_supported);
@@ -250,33 +226,33 @@ void BiopticColorCameraDemoFrame::PopulateWhiteBalanceComponent(std::shared_ptr<
     }
 
     try {
-    	minimum = camera->WhiteBalanceComponent.Minimum();
-    	maximum = camera->WhiteBalanceComponent.Maximum();
+    	min = camera->WhiteBalanceComponent.Minimum();
+    	max = camera->WhiteBalanceComponent.Maximum();
     	val = camera->WhiteBalanceComponent.Value();
     	res = camera->WhiteBalanceComponent.Resolution();
 
     	// Update blue component properties, but DO NOT UPDATE THE UI CONTROLLERS YET!
         fvalidator = (wxFloatingPointValidator<float>*)TextCtrlWhiteBalanceBlue->GetValidator();
-        fvalidator->SetMin(ConvertUint16ToFloat(minimum.Blue(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
-        fvalidator->SetMax(ConvertUint16ToFloat(maximum.Blue(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
+        fvalidator->SetMin(ConvertUint16ToFloat(min.Blue(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
+        fvalidator->SetMax(ConvertUint16ToFloat(max.Blue(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
 
         property_wb_blue = val.Blue();
         property_wb_blue_in_float = ConvertUint16ToFloat(val.Blue(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS);
 
-        SliderWhiteBalanceBlue->SetMin(minimum.Blue());
-        SliderWhiteBalanceBlue->SetMax(maximum.Blue());
+        SliderWhiteBalanceBlue->SetMin(min.Blue());
+        SliderWhiteBalanceBlue->SetMax(max.Blue());
         SliderWhiteBalanceBlue->SetTickFreq(res.Blue());
 
         // Update red component properties
         fvalidator = (wxFloatingPointValidator<float>*)TextCtrlWhiteBalanceRed->GetValidator();
-		fvalidator->SetMin(ConvertUint16ToFloat(minimum.Red(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
-		fvalidator->SetMax(ConvertUint16ToFloat(maximum.Red(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
+		fvalidator->SetMin(ConvertUint16ToFloat(min.Red(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
+		fvalidator->SetMax(ConvertUint16ToFloat(max.Red(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS));
 
         property_wb_red = val.Red();
         property_wb_red_in_float = ConvertUint16ToFloat(val.Red(), WHITE_BALANCE_NUMBER_OF_FRACTION_BITS);
 
-        SliderWhiteBalanceRed->SetMin(minimum.Red());
-        SliderWhiteBalanceRed->SetMax(maximum.Red());
+        SliderWhiteBalanceRed->SetMin(min.Red());
+        SliderWhiteBalanceRed->SetMax(max.Red());
         SliderWhiteBalanceRed->SetTickFreq(res.Red());
 
         // Finally transfer the property values to UI controllers.
@@ -299,195 +275,149 @@ void BiopticColorCameraDemoFrame::PopulateWhiteBalanceComponent(std::shared_ptr<
     catch (...) {
     }
 }
-// Get backlight property value and set value to backlight slider
-void BiopticColorCameraDemoFrame::PopulateBacklight(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+
+void ZebraCameraDemoFrame::PopulateBacklight(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxIntegerValidator<int>* ivalidator;
-    int16_t minimum = 0, maximum = 0, val = 0, res = 0;
+    int16_t min = 0, max = 0, val = 0, res = 0;
 
     SliderBacklight->Enable();
     TextCtrlBacklight->Enable();
 
-    minimum = camera->BacklightCompensation.Minimum();
-    maximum = camera->BacklightCompensation.Maximum();
+    min = camera->BacklightCompensation.Minimum();
+    max = camera->BacklightCompensation.Maximum();
     val = camera->BacklightCompensation.Value();
     res = camera->BacklightCompensation.Resolution();
 
     ivalidator = (wxIntegerValidator<int>*)TextCtrlBacklight->GetValidator();
-    ivalidator->SetMin(minimum);
-    ivalidator->SetMax(maximum);
+    ivalidator->SetMin(min);
+    ivalidator->SetMax(max);
 
     property_backlight = val;
 
-    SliderBacklight->SetMin(minimum);
-    SliderBacklight->SetMax(maximum);
+    SliderBacklight->SetMin(min);
+    SliderBacklight->SetMax(max);
     SliderBacklight->SetTickFreq(res);
 
     ivalidator->TransferToWindow();
     SliderBacklight->GetValidator()->TransferToWindow();
 }
 
-// Get gain property value and set value to gain slider
-void BiopticColorCameraDemoFrame::PopulateGain(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateGain(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
     wxIntegerValidator<int>* ivalidator;
-    int16_t minimum = 0, maximum = 0, val = 0, res = 0;
+    int16_t min = 0, max = 0, val = 0, res = 0;
 
     SliderGain->Enable();
     TextCtrlGain->Enable();
 
-    minimum = camera->Gain.Minimum();
-    maximum = camera->Gain.Maximum();
+    min = camera->Gain.Minimum();
+    max = camera->Gain.Maximum();
     val = camera->Gain.Value();
     res = camera->Gain.Resolution();
 
     ivalidator = (wxIntegerValidator<int>*)TextCtrlGain->GetValidator();
-    ivalidator->SetMin(minimum);
-    ivalidator->SetMax(maximum);
+    ivalidator->SetMin(min);
+    ivalidator->SetMax(max);
 
     property_gain = val;
 
-    SliderGain->SetMin(minimum);
-    SliderGain->SetMax(maximum);
+    SliderGain->SetMin(min);
+    SliderGain->SetMax(max);
     SliderGain->SetTickFreq(res);
 
     ivalidator->TransferToWindow();
     SliderGain->GetValidator()->TransferToWindow();
 }
 
-// Get exposure property value and set value to exposure slider
-void BiopticColorCameraDemoFrame::PopulateAbsoluteExposureTime(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
+void ZebraCameraDemoFrame::PopulateProcessingUnitInfo(std::shared_ptr<zebra::camera_sdk::ZebraCameraClient> camera)
 {
-    wxIntegerValidator<int>* ivalidator;
-    int16_t minimum = 0, maximum = 0, val = 0, res = 0;
+    wxLogMessage("%s", __func__);
 
-    try {
-    	bool auto_supported = camera->AbsoluteExposureTime.IsAutoSupported();
-    	CheckBoxExposureTimeAuto->Enable(auto_supported);
-
-    	SliderAbsoluteExposureTime->Enable();
-    	TextCtrlAbsoluteExposureTime->Enable();
-
-    	if (auto_supported)
-    	{
-    		bool auto_enabled = camera->AbsoluteExposureTime.IsAutoEnabled();
-    		CheckBoxExposureTimeAuto->SetValue(auto_enabled);
-
-    		if (auto_enabled)
-    		{
-    			// Auto enabled. Disable the slider and text controls.
-    			SliderAbsoluteExposureTime->Disable();
-    			TextCtrlAbsoluteExposureTime->Disable();
-    		}
-    	}
-
-
-    	minimum = camera->AbsoluteExposureTime.Minimum();
-    	maximum = camera->AbsoluteExposureTime.Maximum();
-    	val = camera->AbsoluteExposureTime.Value();
-    	res = camera->AbsoluteExposureTime.Resolution();
-
-    	ivalidator = (wxIntegerValidator<int>*)TextCtrlAbsoluteExposureTime->GetValidator();
-    	ivalidator->SetMin(minimum);
-    	ivalidator->SetMax(maximum);
-
-    	property_abs_exposure_time = val;
-
-    	SliderAbsoluteExposureTime->SetMin(minimum);
-    	SliderAbsoluteExposureTime->SetMax(maximum);
-    	SliderAbsoluteExposureTime->SetTickFreq(res);
-
-    	ivalidator->TransferToWindow();
-    	SliderAbsoluteExposureTime->GetValidator()->TransferToWindow();
-    }
-    catch(...) {
+    if (camera)
+    {
+        try
+        {
+            PopulateBrightness(camera);
+            PopulateContrast(camera);
+            PopulateSaturation(camera);
+            PopulateSharpness(camera);
+            PopulateGamma(camera);
+            PopulateWhiteBalanceComponent(camera);
+            PopulateBacklight(camera);
+            PopulateGain(camera);
+        }
+        catch (...) {}
     }
 }
 
-void BiopticColorCameraDemoFrame::OnSliderBrightnessCmdScrollChanged(wxScrollEvent& event)
+
+void ZebraCameraDemoFrame::OnSliderBrightnessCmdScrollChanged(wxScrollEvent& event)
 {
     SliderBrightness->GetValidator()->TransferFromWindow();
     TextCtrlBrightness->GetValidator()->TransferToWindow();
     wxLogMessage("%s: pos=%d, property_brightness=%d", __func__, event.GetPosition(), property_brightness);
-    EventLog("Propery brightness CHANGED : ",property_brightness);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderContrastCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderContrastCmdScrollChanged(wxScrollEvent& event)
 {
     SliderContrast->GetValidator()->TransferFromWindow();
     TextCtrlContrast->GetValidator()->TransferToWindow();
     wxLogMessage("%s: pos=%d, property_contrast=%d", __func__, event.GetPosition(), property_contrast);
-    EventLog("Propery contrast CHANGED : ",property_contrast);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderSaturationCmdScrollChanged(wxScrollEvent& event)
-{
-    SliderSaturation->GetValidator()->TransferFromWindow();
-    TextCtrlSaturation->GetValidator()->TransferToWindow();
-    wxLogMessage("%s: pos=%d, property_saturation=%d", __func__, event.GetPosition(), property_saturation);
-    EventLog("Propery saturation CHANGED : ",property_saturation);
-}
-
-void BiopticColorCameraDemoFrame::OnSliderSharpnessCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderSharpnessCmdScrollChanged(wxScrollEvent& event)
 {
     SliderSharpness->GetValidator()->TransferFromWindow();
     TextCtrlSharpness->GetValidator()->TransferToWindow();
     wxLogMessage("%s: pos=%d, property_sharpness=%d", __func__, event.GetPosition(), property_sharpness);
-    EventLog("Propery sharpness CHANGED : ",property_sharpness);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderGammaCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderGammaCmdScrollChanged(wxScrollEvent& event)
 {
     SliderGamma->GetValidator()->TransferFromWindow();
     TextCtrlGamma->GetValidator()->TransferToWindow();
     wxLogMessage("%s: pos=%d, property_gamma=%d", __func__, event.GetPosition(), property_gamma);
-    EventLog("Propery gamma CHANGED : ",property_gamma);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderWhiteBalanceBlueCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderWhiteBalanceBlueCmdScrollChanged(wxScrollEvent& event)
 {
     SliderWhiteBalanceBlue->GetValidator()->TransferFromWindow();
     property_wb_blue_in_float = ConvertUint16ToFloat(property_wb_blue, WHITE_BALANCE_NUMBER_OF_FRACTION_BITS);
     TextCtrlWhiteBalanceBlue->GetValidator()->TransferToWindow();
-    wxLogMessage("%s: pos=%d, property_wb_blue_in_float=%f", __func__, event.GetPosition(), property_wb_blue_in_float);
-    EventLog("Propery white balance (Blue) CHANGED : ",property_wb_blue_in_float);
+    wxLogMessage("%s: pos=%d, property_wb_red_in_float=%f", __func__, event.GetPosition(), property_wb_blue_in_float);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderWhiteBalanceRedCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderWhiteBalanceRedCmdScrollChanged(wxScrollEvent& event)
 {
     SliderWhiteBalanceRed->GetValidator()->TransferFromWindow();
     property_wb_red_in_float = ConvertUint16ToFloat(property_wb_red, WHITE_BALANCE_NUMBER_OF_FRACTION_BITS);
     TextCtrlWhiteBalanceRed->GetValidator()->TransferToWindow();
     wxLogMessage("%s: pos=%d, property_wb_red_in_float=%f", __func__, event.GetPosition(), property_wb_red_in_float);
-    EventLog("Propery white balance (Red) CHANGED : ",property_wb_red_in_float);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderBacklightCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderBacklightCmdScrollChanged(wxScrollEvent& event)
 {
     SliderBacklight->GetValidator()->TransferFromWindow();
     TextCtrlBacklight->GetValidator()->TransferToWindow();
     wxLogMessage("%s: pos=%d, property_backlight=%d", __func__, event.GetPosition(), property_backlight);
-    EventLog("Propery backlight CHANGED : ",property_backlight);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderGainCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderGainCmdScrollChanged(wxScrollEvent& event)
 {
     SliderGain->GetValidator()->TransferFromWindow();
     TextCtrlGain->GetValidator()->TransferToWindow();
     wxLogMessage("%s: pos=%d, property_gain=%d", __func__, event.GetPosition(), property_gain);
-    EventLog("Propery gain CHANGED : ",property_gain);
 }
 
-void BiopticColorCameraDemoFrame::OnSliderAbsoluteExposureTimeCmdScrollChanged(wxScrollEvent& event)
+void ZebraCameraDemoFrame::OnSliderSaturationCmdScrollChanged(wxScrollEvent& event)
 {
-    SliderAbsoluteExposureTime->GetValidator()->TransferFromWindow();
-    TextCtrlAbsoluteExposureTime->GetValidator()->TransferToWindow();
-    wxLogMessage("%s: pos=%d, property_abs_exposure_time=%d", __func__, event.GetPosition(), property_abs_exposure_time);
-    EventLog("Propery exposure CHANGED : ",property_abs_exposure_time);
+    SliderSaturation->GetValidator()->TransferFromWindow();
+    TextCtrlSaturation->GetValidator()->TransferToWindow();
+    wxLogMessage("%s: pos=%d, property_saturation=%d", __func__, event.GetPosition(), property_saturation);
 }
 
-
-void BiopticColorCameraDemoFrame::OnTextCtrlBrightnessText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlBrightnessText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -507,7 +437,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlBrightnessText(wxCommandEvent& event
 
 }
 
-void BiopticColorCameraDemoFrame::OnTextCtrlContrastText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlContrastText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -520,6 +450,11 @@ void BiopticColorCameraDemoFrame::OnTextCtrlContrastText(wxCommandEvent& event)
     {
     	try
     	{
+    		if (camera->Contrast.IsAutoSupported() &&
+    				camera->Contrast.IsAutoEnabled())
+    		{
+    			return;
+    		}
     		camera->Contrast.Value(property_contrast);
     	}
     	catch (...) {}
@@ -527,7 +462,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlContrastText(wxCommandEvent& event)
 
 }
 
-void BiopticColorCameraDemoFrame::OnTextCtrlSaturationText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlSaturationText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -547,7 +482,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlSaturationText(wxCommandEvent& event
 
 }
 
-void BiopticColorCameraDemoFrame::OnTextCtrlSharpnessText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlSharpnessText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -567,32 +502,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlSharpnessText(wxCommandEvent& event)
 
 }
 
-void BiopticColorCameraDemoFrame::OnTextCtrlAbsoluteExposureTimeText(wxCommandEvent& event)
-{
-
-    (void)event;
-
-    TextCtrlAbsoluteExposureTime->GetValidator()->TransferFromWindow();
-    SliderAbsoluteExposureTime->GetValidator()->TransferToWindow();
-
-    auto camera = GetCamera();
-    if (camera)
-    {
-        try
-        {
-        	if (camera->AbsoluteExposureTime.IsAutoSupported() &&
-        			camera->AbsoluteExposureTime.IsAutoEnabled())
-        	{
-        		return;
-        	}
-        	camera->AbsoluteExposureTime.Value(property_abs_exposure_time);
-        }
-        catch (...) {}
-    }
-
-}
-
-void BiopticColorCameraDemoFrame::OnTextCtrlGammaText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlGammaText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -612,7 +522,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlGammaText(wxCommandEvent& event)
 
 }
 
-void BiopticColorCameraDemoFrame::OnTextCtrlWhiteBalanceBlueText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlWhiteBalanceBlueText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -644,7 +554,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlWhiteBalanceBlueText(wxCommandEvent&
 
 }
 
-void BiopticColorCameraDemoFrame::OnTextCtrlWhiteBalanceRedText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlWhiteBalanceRedText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -675,8 +585,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlWhiteBalanceRedText(wxCommandEvent& 
 
 }
 
-
-void BiopticColorCameraDemoFrame::OnTextCtrlBacklightText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlBacklightText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -696,7 +605,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlBacklightText(wxCommandEvent& event)
 
 }
 
-void BiopticColorCameraDemoFrame::OnTextCtrlGainText(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnTextCtrlGainText(wxCommandEvent& event)
 {
 
     (void)event;
@@ -716,7 +625,7 @@ void BiopticColorCameraDemoFrame::OnTextCtrlGainText(wxCommandEvent& event)
 
 }
 
-void BiopticColorCameraDemoFrame::OnCheckBoxExposureTimeAutoClick(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnCheckBoxContrastAutoClick(wxCommandEvent& event)
 {
 
     wxLogMessage("%s: checked=%d", __func__, event.IsChecked());
@@ -724,35 +633,31 @@ void BiopticColorCameraDemoFrame::OnCheckBoxExposureTimeAutoClick(wxCommandEvent
     auto camera = GetCamera();
     if (camera)
     {
-        try
-        {
-        	camera->AbsoluteExposureTime.AutoEnable(event.IsChecked());
-        	bool auto_enabled = camera->AbsoluteExposureTime.IsAutoEnabled();
+    	try
+    	{
+    		camera->Contrast.AutoEnable(event.IsChecked());
+    		bool auto_enabled = camera->Contrast.IsAutoEnabled();
 
-        	wxLogMessage("%s: auto_enabled=%d", __func__, auto_enabled);
+    		if (auto_enabled)
+    		{
+    			// Auto enabled. Disable the slider and text controls.
+    			SliderContrast->Disable();
+    			TextCtrlContrast->Disable();
+    		}
+    		else
+    		{
+    			SliderContrast->Enable();
+    			TextCtrlContrast->Enable();
 
-        	if (auto_enabled)
-        	{
-        		// Auto enabled. Disable the slider and text controls.
-        		SliderAbsoluteExposureTime->Disable();
-        		TextCtrlAbsoluteExposureTime->Disable();
-                EventLog("Exposure AUTO ENABLED ");
-        	}
-        	else
-        	{
-        		SliderAbsoluteExposureTime->Enable();
-        		TextCtrlAbsoluteExposureTime->Enable();
-
-        		PopulateAbsoluteExposureTime(camera);
-                EventLog("Exposure AUTO DISABLED ");
-        	}
-        }
-        catch (...) {}
+    			PopulateContrast(camera);
+    		}
+    	}
+    	catch (...) {}
     }
 
 }
 
-void BiopticColorCameraDemoFrame::OnCheckBoxWhiteBalanceAutoClick(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnCheckBoxWhiteBalanceAutoClick(wxCommandEvent& event)
 {
 
     wxLogMessage("%s: checked=%d", __func__, event.IsChecked());
@@ -778,7 +683,6 @@ void BiopticColorCameraDemoFrame::OnCheckBoxWhiteBalanceAutoClick(wxCommandEvent
 
     			// Start value field refresh timer.
     			auto_white_balance_monitor_timer_.Start(WHITE_BALANCE_POLLING_INTERVAL_IN_MILLISECONDS);
-                EventLog("White Balance AUTO ENABLED ");
     		}
     		else
     		{
@@ -792,7 +696,6 @@ void BiopticColorCameraDemoFrame::OnCheckBoxWhiteBalanceAutoClick(wxCommandEvent
 
     			// Stop value field refresh timer.
     			auto_white_balance_monitor_timer_.Stop();
-                EventLog("White Balance AUTO DISABLED ");
     		}
     	}
     	catch (...) {}
@@ -800,9 +703,7 @@ void BiopticColorCameraDemoFrame::OnCheckBoxWhiteBalanceAutoClick(wxCommandEvent
 
 }
 
-
-
-void BiopticColorCameraDemoFrame::OnAutoWhiteBalanceUpdateTimer(wxTimerEvent& event)
+void ZebraCameraDemoFrame::OnAutoWhiteBalanceUpdateTimer(wxTimerEvent& event)
 {
 
     (void)event;
@@ -833,34 +734,30 @@ void BiopticColorCameraDemoFrame::OnAutoWhiteBalanceUpdateTimer(wxTimerEvent& ev
 
 }
 
-
-
-void BiopticColorCameraDemoFrame::ClearProcessingUnitInfo()
+void ZebraCameraDemoFrame::ClearProcessingUnitInfo()
 {
     wxSlider *sliders[] = {
+        SliderBacklight,
         SliderBrightness,
         SliderContrast,
-        SliderSaturation,
-        SliderSharpness,   
-        SliderGamma,
-        SliderBacklight,
         SliderGain,
-        SliderAbsoluteExposureTime,
+        SliderGamma,
+        SliderSaturation,
+        SliderSharpness,
         SliderWhiteBalanceBlue,
         SliderWhiteBalanceRed,
     };
 
-    wxTextCtrl *textboxes[] = { 
+    wxTextCtrl *textboxes[] = {
+        TextCtrlBacklight,
         TextCtrlBrightness,
         TextCtrlContrast,
-        TextCtrlSaturation,
-        TextCtrlSharpness, 
-        TextCtrlGamma,
-        TextCtrlWhiteBalanceBlue,
         TextCtrlGain,
-        TextCtrlAbsoluteExposureTime,
-        TextCtrlBacklight,
-        TextCtrlWhiteBalanceRed,
+        TextCtrlGamma,
+        TextCtrlSaturation,
+        TextCtrlSharpness,
+        TextCtrlWhiteBalanceBlue,
+        TextCtrlWhiteBalanceRed
     };
 
     for (unsigned int i = 0; i < sizeof(sliders)/sizeof(sliders[0]); i++)
@@ -873,9 +770,8 @@ void BiopticColorCameraDemoFrame::ClearProcessingUnitInfo()
         txtbox->Disable();
     }
 
-    CheckBoxExposureTimeAuto->Disable();
+    CheckBoxContrastAuto->Disable();
     CheckBoxWhiteBalanceAuto->Disable();
 
     auto_white_balance_monitor_timer_.Stop();
 }
-

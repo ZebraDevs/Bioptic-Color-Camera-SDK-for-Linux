@@ -15,7 +15,7 @@
 #include "image_event_subscriber.h"
 #include "image_event.h"
 
-class BiopticColorCameraDemoFrame;
+class ZebraCameraDemoFrame;
 
 
 /**
@@ -30,7 +30,7 @@ class ImageEventSubscriberSample : public ImageEventSubscriber {
         /**
          * Constructor, initializes ImageEventSubscriberSample class variables
          */
-        ImageEventSubscriberSample(BiopticColorCameraDemoFrame *frame);
+        ImageEventSubscriberSample(ZebraCameraDemoFrame *frame);
 
         /**
          * Sample implementation of the pure virtual method RecieveImageEvents
@@ -40,7 +40,7 @@ class ImageEventSubscriberSample : public ImageEventSubscriber {
         void RecieveImageEvents(ImageCreationEvent *image_creation_event);
 
     private:
-        BiopticColorCameraDemoFrame *demo_ui_frame_demo_ui_frame_;
+        ZebraCameraDemoFrame *demo_ui_frame_demo_ui_frame_;
 };
 
 

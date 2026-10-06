@@ -1,11 +1,6 @@
-/***************************************************************
- * Name:      CameraPlugAndPlay.h
- * Purpose:   Defines Plug and Play listeners during camera attachment and detachment.
- * Author:     ()
- * Created:   2021-03-01
- * Copyright: ©2022 Zebra Technologies Corp. and/or its affiliates.  All rights reserved.
- * License:
- **************************************************************/
+/*
+    Camera plug-and-play event listenters.
+*/
 
 #ifndef CAMERA_PLUGANDPLAY_H_
 #define CAMERA_PLUGANDPLAY_H_
@@ -14,34 +9,28 @@
 
 #include "device_manager.h"
 
-class BiopticColorCameraDemoFrame;
+//using namespace zebra::camera_sdk;
 
-// Defines AttachedEventObserver class
+class ZebraCameraDemoFrame;
+
 class AttachedEventObserver: public zebra::DeviceAttachedListener
 {
 public:
-    // Constructor
-    AttachedEventObserver(BiopticColorCameraDemoFrame *frame);
-
-    // Get attached camera info  and add camera to camera arrived queue and creates CAMERA_SELECTED_EVENT.
+    AttachedEventObserver(ZebraCameraDemoFrame *frame);
 	void Attached(zebra::DeviceInfo info) override;
 
 private:
-    BiopticColorCameraDemoFrame *frame_;
+    ZebraCameraDemoFrame *frame_;
 };
 
-// Defines DetachedEventObserver class
 class DetachedEventObserver: public zebra::DeviceDetachedListener
 {
 public:
-    // Constructor
-    DetachedEventObserver(BiopticColorCameraDemoFrame *frame);
-
-    // Get detached camera , reset the progress bar of firmware update and add camera to camera left queue and creates CAMERA_DESELECTED_EVENT.
+    DetachedEventObserver(ZebraCameraDemoFrame *frame);
 	void Detached(zebra::DeviceInfo info) override;
 
 private:
-    BiopticColorCameraDemoFrame *frame_;    
+    ZebraCameraDemoFrame *frame_;    
 };
 
 // Declaration of the CAMERA_SELECTED_EVENT. Notify when a camera object is created.

@@ -1,25 +1,14 @@
-/***************************************************************
- * Name:      CameraFirmwareDownload.cpp
- * Purpose:   Implementation of firmware update , firmware update event listening and progress bar updation
- * Author:     ()
- * Created:   2021-03-10
- * Copyright: ©2021 Zebra Technologies Corp. and/or its affiliates.  All rights reserved.
- * License:
- **************************************************************/
-
 #include "CameraFirmwareDownload.h"
 
 #include <wx/msgdlg.h>
 
 #include "wx_pch.h"
-#include "BiopticColorCameraDemoMain.h"
-
+#include "ZebraCameraDemoMain.h"
 
 // Definition of the CAMERA_FIRMWARE_DOWNLOAD_EVENT
 wxDEFINE_EVENT(CAMERA_FIRMWARE_DOWNLOAD_EVENT, wxCommandEvent);
 
-// Constructot
-FirmwareDownloadEventObserver::FirmwareDownloadEventObserver(BiopticColorCameraDemoFrame *frame):
+FirmwareDownloadEventObserver::FirmwareDownloadEventObserver(ZebraCameraDemoFrame *frame):
     frame_(frame)
 {
     wxLogMessage("%s", __func__);
@@ -30,17 +19,16 @@ void FirmwareDownloadEventObserver::EventReceived(FirmwareDownloadEventsArgs eve
     frame_->QueueFirmwareDownloadEvent(event);
 }
 
-void BiopticColorCameraDemoFrame::CreateFirmwareDownloadEventListener()
+void ZebraCameraDemoFrame::CreateFirmwareDownloadEventListener()
 {
     // Bind firmware download event listener
-    Bind(CAMERA_FIRMWARE_DOWNLOAD_EVENT, &BiopticColorCameraDemoFrame::OnCameraFirmwareDownloadEvent, this);
+    Bind(CAMERA_FIRMWARE_DOWNLOAD_EVENT, &ZebraCameraDemoFrame::OnCameraFirmwareDownloadEvent, this);
 
     firmware_download_event_listener_ = new FirmwareDownloadEventObserver(this);
     camera_manager_client_->AddFirmwareDownloadEventListener(*firmware_download_event_listener_);
 }
 
-// Implemntation for releasing firmware download event listener
-void BiopticColorCameraDemoFrame::ReleaseFirmwareDownloadEventListener()
+void ZebraCameraDemoFrame::ReleaseFirmwareDownloadEventListener()
 {
     if (firmware_download_event_listener_)
     {
@@ -48,18 +36,17 @@ void BiopticColorCameraDemoFrame::ReleaseFirmwareDownloadEventListener()
         delete firmware_download_event_listener_;
     }
 
-    Unbind(CAMERA_FIRMWARE_DOWNLOAD_EVENT, &BiopticColorCameraDemoFrame::OnCameraFirmwareDownloadEvent, this);
+    Unbind(CAMERA_FIRMWARE_DOWNLOAD_EVENT, &ZebraCameraDemoFrame::OnCameraFirmwareDownloadEvent, this);
 }
 
-// Add firmware update event to the event queue
-void BiopticColorCameraDemoFrame::QueueFirmwareDownloadEvent(FirmwareDownloadEventsArgs status)
+void ZebraCameraDemoFrame::QueueFirmwareDownloadEvent(FirmwareDownloadEventsArgs fwstatus)
 {
     wxCommandEvent *event = new wxCommandEvent(CAMERA_FIRMWARE_DOWNLOAD_EVENT, GetId());
-    event->SetClientData(new FirmwareDownloadEventsArgs(status));
+    event->SetClientData(new FirmwareDownloadEventsArgs(fwstatus));
     QueueEvent(event);
 }
 
-void BiopticColorCameraDemoFrame::OnCameraFirmwareDownloadEvent(wxCommandEvent& event)
+void ZebraCameraDemoFrame::OnCameraFirmwareDownloadEvent(wxCommandEvent& event)
 {
     FirmwareDownloadEventsArgs *fwstatus = (FirmwareDownloadEventsArgs*)event.GetClientData();
 
@@ -69,12 +56,11 @@ void BiopticColorCameraDemoFrame::OnCameraFirmwareDownloadEvent(wxCommandEvent& 
                      __func__,
                      fwstatus->GetTotalRecords(), fwstatus->GetCurrentRecord(), fwstatus->GetStatus(), fwstatus->GetOperationCode());
         GaugeFirmwareDownloadProgress->SetRange(fwstatus->GetTotalRecords());
-        
+
         if (FirmwareDownloadEventsArgs::Status::kSuccessful == fwstatus->GetStatus())
         {
             // Update the progress.
             GaugeFirmwareDownloadProgress->SetValue(fwstatus->GetCurrentRecord());
-            EventLog("Firmware Update in PROGRESS");
         }
         else if (FirmwareDownloadEventsArgs::Status::kCanceled == fwstatus->GetStatus())
         {
@@ -85,8 +71,16 @@ void BiopticColorCameraDemoFrame::OnCameraFirmwareDownloadEvent(wxCommandEvent& 
         if ((FirmwareDownloadEventsArgs::OperationCode::kSessionStop == fwstatus->GetOperationCode()) &&
             (fwstatus->GetTotalRecords() == fwstatus->GetCurrentRecord()))
         {
-            firmware_update_completed = true;
-            EventLog("Firmware Update ENDED & READY TO LAUNCH");
+            try
+            {
+            	camera_manager_client_->InstallFirmware(GetCamera());
+            }
+            catch (std::exception& e)
+            {
+                wxString msg;
+                msg.Printf(wxT("%s"), e.what());
+                wxMessageBox(msg, _("Firmware Install"), wxICON_ERROR);
+            }
         }
     }
 }

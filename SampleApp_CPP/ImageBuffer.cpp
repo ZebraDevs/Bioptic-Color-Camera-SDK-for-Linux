@@ -1,20 +1,15 @@
-/***************************************************************
- * Name:      ImageBuffer.cpp
- * Purpose:   Implementation of image frame handling
- * Author:     ()
- * Created:   2021-03-22
- * Copyright: ©2022 Zebra Technologies Corp. and/or its affiliates.  All rights reserved.
- * License:
- **************************************************************/
+/*
+    Image frame handling and listener implementation.
+*/
 
 #include "ImageBuffer.h"
 
 #include <cstring>
 #include <thread>
-#include <sstream>     
+#include <sstream>      // For std::stringstream
 #include <fstream>
 
-#include "BiopticColorCameraDemoMain.h"
+#include "ZebraCameraDemoMain.h"
 #include "image_converter.h"
 
 ImageBuffer::ImageBuffer()
@@ -57,12 +52,14 @@ void ImageBuffer::CopyToBuffer(const uint8_t *data, size_t size)
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
+    //wxLogMessage("%s: our size = %d, required = %d", __func__, image_size_, size);
 
     if (image_size_ >= size && 0 != size)
     {
         std::memcpy(image_frame_data_, data, size);
         utilized_size_ = size;
 
+        //wxLogMessage("%s: copied: %lu bytes", __func__, utilized_size_);
     }
     else
     {
@@ -80,6 +77,7 @@ void ImageBuffer::CopyFromBuffer(uint8_t *data, size_t& size)
         std::memcpy(data, image_frame_data_, utilized_size_);
         size = utilized_size_;
 
+        //wxLogMessage("%s: copied: %lu bytes", __func__, utilized_size_);
     }
     else
     {

@@ -1,12 +1,3 @@
-/***************************************************************
- * Name:      VideoPlane.cpp
- * Purpose:   Implementation of Custom wxWidgets controller for displaying video
- * Author:     ()
- * Created:   2021-03-23
- * Copyright: ©2022 Zebra Technologies Corp. and/or its affiliates.  All rights reserved.
- * License:
- **************************************************************/
-
 #include "VideoPanel.h"
 
 #include <cstring>
